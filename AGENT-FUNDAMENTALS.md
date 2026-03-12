@@ -1,122 +1,64 @@
-# Agent Fundamentals – Day 1 Exercise
+# Agent Fundamentals – Day 1
 
 ## Overview
 
-In Day-1 we built a simple **multi-agent system** using Python and a local Large Language Model.  
-Instead of answering a question using a single model call, the task is divided among multiple specialized agents.
-
-The system contains three agents:
-
-- Research Agent
-- Summarizer Agent
-- Answer Agent
-
-Each agent performs a specific task and passes its output to the next agent.
+A simple multi-agent pipeline built with **AutoGen** and a local **Phi-3** model via **Ollama**. Three specialized agents collaborate to answer a user query.
 
 ---
 
-## What Happens in This Exercise
+## Agents
 
-The workflow follows a sequential pipeline:
+| Agent | Role |
+|---|---|
+| Research Agent | Generates detailed notes on the topic |
+| Summarizer Agent | Condenses notes into a short summary |
+| Answer Agent | Produces the final user-facing response |
 
-User Question → Research Agent → Summarizer Agent → Answer Agent → Final Output
-
-1. The **Research Agent** receives the user query and generates detailed information about the topic.
-2. The **Summarizer Agent** converts the research text into concise bullet points.
-3. The **Answer Agent** produces the final response using the summarized information.
-4. The final result is displayed in the terminal.
-
-This demonstrates how **multiple agents collaborate to solve a task step-by-step**.
+**Flow:** `User → Research → Summarizer → Answer → Output`
 
 ---
 
-### File Purpose
+## Key Concepts
 
-1. **main.py**
-
-    Entry point of the program.  
-    Initializes the model, creates the agents, and executes the workflow.
-
-2. **agents/base_agent.py**
-
-    Contains the BaseAgent class which provides shared functionality such as:
-
-    - storing conversation memory
-    - building prompts
-    - generating responses
-
-3. **agents/research_agent.py**
-
-    Implements the Research Agent responsible for generating detailed information for a query.
-
-4. **agents/summarizer_agent.py**
-
-    Implements the Summarizer Agent which converts research text into concise bullet points.
-
-5. **agents/answer_agent.py**
-
-    Implements the Answer Agent which produces the final response for the user.
-
-6. **llm/model_loader.py**
-
-    Loads the local language model and provides the `generate()` function used by the agents.
+- **Agent Loop:** Perception → Reasoning → Action
+- **Message Passing:** Each agent processes the previous agent's output
+- **Role Isolation:** Strict separation of responsibilities for modularity
 
 ---
 
-## Model Used
+## Project Structure
 
-The project uses a local instruction-tuned model from Hugging Face:
-
-```py
-model= "microsoft/Phi-3-mini-4k-instruct"
 ```
-
-This model is lightweight and suitable for running locally while still producing structured responses.
+WEEK_9/
+├── agents/
+│   ├── research_agent.py
+│   ├── summarizer_agent.py
+│   └── answer_agent.py
+├── model_client.py       # Connects to Ollama (phi3, localhost:11434)
+├── main.py               # Entry point & pipeline coordinator
+└── AGENT-FUNDAMENTALS.md
+```
 
 ---
 
-## Steps to Build and Run the Project
+## Setup & Run
 
-### 1. Create Virtual Environment
-
-```bin
-python3 -m venv .venv
-```
-
-### 2. Activate Virtual Environment
-```bin
-source .venv/bin/activate
-```
-
-### 3. Install Dependencies
-```bin
-pip install transformers torch
-```
-
-### 4. Run the Program
-```bin
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install autogen-agentchat autogen-ext openai
+ollama serve
+ollama pull phi3
 python main.py
 ```
----
-## Query Used for Testing
 
-The query used for testing the system was:
-```py
-query = "How do airplanes fly?"
-```
 ---
 
-## Output
+## output
 
-When the program runs, each agent produces intermediate results.
+![final_results](screenshots/day1/final_result.png)
 
+## Takeaways
 
-**Final Answer**
-
-![Final_result](screenshots/day1/final_result.png)
----
-
-## Conclusion
-
-This exercise demonstrates the fundamentals of building a **multi-agent system**.  
-By separating tasks among different agents, the system becomes modular and easier to extend. Future improvements can include memory systems, retrieval, APIs, and deployment frameworks.
+- Agents can collaborate to solve tasks more effectively than a single model call
+- Local LLMs (Ollama) enable fully offline AI systems
+- This architecture extends naturally to memory, RAG, and task planning

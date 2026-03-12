@@ -1,20 +1,17 @@
-from .base_agent import BaseAgent
+from autogen_agentchat.agents import AssistantAgent
+from model_client import model_client
 
-class ResearchAgent(BaseAgent):
+research_agent = AssistantAgent(
+    name="research_agent",
+    model_client=model_client,
+    system_message="""
+You are a Research Agent.
 
-    def __init__(self, llm):
+Your job is to gather factual information about the user query.
 
-        system_prompt = """
-You are a research specialist.
-
-Your task:
-- Gather factual information
-- Provide detailed research notes
-- Do not summarize
+Rules:
+- Provide research notes
+- Do NOT summarize
+- Do NOT answer the user
 """
-
-        super().__init__(llm, system_prompt)
-
-    def run(self, query):
-
-        return self.generate(query)
+)

@@ -1,20 +1,15 @@
-from .base_agent import BaseAgent
+from autogen_agentchat.agents import AssistantAgent
+from model_client import model_client
 
-class SummarizerAgent(BaseAgent):
+summarizer_agent = AssistantAgent(
+    name="summarizer_agent",
+    model_client=model_client,
+    system_message="""
+You are a Summarizer Agent.
 
-    def __init__(self, llm):
+Your job is to read research notes and produce a concise summary.
 
-        system_prompt = """
-You are a summarization expert.
-
-Your task:
-- Convert research text into concise bullet points
-- Keep key facts
-- Do not introduce new information
+Rules:
+- Do NOT answer the user
 """
-
-        super().__init__(llm, system_prompt)
-
-    def run(self, research_text):
-
-        return self.generate(research_text)
+)

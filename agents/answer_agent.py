@@ -1,19 +1,11 @@
-from .base_agent import BaseAgent
+from autogen_agentchat.agents import AssistantAgent
+from model_client import model_client
 
-class AnswerAgent(BaseAgent):
-
-    def __init__(self, llm):
-
-        system_prompt = """
-You are an answer generator.
-
-Your task:
-- Use the summarized research
-- Provide a clear final answer
+answer_agent = AssistantAgent(
+    name="answer_agent",
+    model_client=model_client,
+    system_message="""
+You are the Final Answer Agent.
+Your job is to read the summary and produce the final answer for the user.
 """
-
-        super().__init__(llm, system_prompt)
-
-    def run(self, summary):
-
-        return self.generate(summary)
+)

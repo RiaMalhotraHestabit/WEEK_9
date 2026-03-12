@@ -1,31 +1,28 @@
-from agents.research_agent import ResearchAgent
-from agents.summarizer_agent import SummarizerAgent
-from agents.answer_agent import AnswerAgent
+import asyncio
+from agents.research_agent import research_agent
+from agents.summarizer_agent import summarizer_agent
+from agents.answer_agent import answer_agent
 
-from llm.model_loader import LocalLLM
+async def run_pipeline(query):
 
-def main():
+    print("\nUser:", query)
 
-    llm = LocalLLM()
+    research = await research_agent.run(task=query)
+    research_text = research.messages[-1].content
+    print("\nResearch Agent:\n", research_text)
 
-    research_agent = ResearchAgent(llm)
-    summarizer_agent = SummarizerAgent(llm)
-    answer_agent = AnswerAgent(llm)
+    summary = await summarizer_agent.run(task=research_text)
+    summary_text = summary.messages[-1].content
+    print("\nSummarizer Agent:\n", summary_text)
 
-    query = "How do airplanes fly?"
+    answer = await answer_agent.run(task=summary_text)
+    answer_text = answer.messages[-1].content
+    print("\nFinal Answer:\n", answer_text)
 
-    research = research_agent.run(query)
-    print("Research Agent Output:")
-    print(research)
+async def main():
 
-    summary = summarizer_agent.run(research)
-    print("\nSummary:")
-    print(summary)
-
-    final_answer = answer_agent.run(summary)
-    print("\nFinal Answer:\n")
-    print(final_answer)
+    query = "Why is the sky blue?"
+    await run_pipeline(query)
 
 
-if __name__ == "__main__":
-    main()
+asyncio.run(main())
