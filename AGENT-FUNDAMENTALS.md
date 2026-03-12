@@ -2,7 +2,7 @@
 
 ## Overview
 
-A simple multi-agent pipeline built with **AutoGen** and a local **Phi-3** model via **Ollama**. Three specialized agents collaborate to answer a user query.
+A simple multi-agent pipeline built with **AutoGen AgentChat** and **Mistral** via **Ollama. Three specialized agents collaborate to answer a user query.
 
 ---
 
@@ -10,11 +10,11 @@ A simple multi-agent pipeline built with **AutoGen** and a local **Phi-3** model
 
 | Agent | Role |
 |---|---|
-| Research Agent | Generates detailed notes on the topic |
-| Summarizer Agent | Condenses notes into a short summary |
+| Research Agent | Gathers detailed factual notes on the topic |
+| Summarizer Agent | Condenses research notes into key points |
 | Answer Agent | Produces the final user-facing response |
 
-**Flow:** `User → Research → Summarizer → Answer → Output`
+**Flow:** `User → Research Agent → Summarizer Agent → Answer Agent → Output`
 
 ---
 
@@ -23,6 +23,7 @@ A simple multi-agent pipeline built with **AutoGen** and a local **Phi-3** model
 - **Agent Loop:** Perception → Reasoning → Action
 - **Message Passing:** Each agent processes the previous agent's output
 - **Role Isolation:** Strict separation of responsibilities for modularity
+- **Memory Window:** Each agent retains the last 10 messages via `BufferedChatCompletionContext`
 
 ---
 
@@ -34,7 +35,7 @@ WEEK_9/
 │   ├── research_agent.py
 │   ├── summarizer_agent.py
 │   └── answer_agent.py
-├── model_client.py       # Connects to Ollama (phi3, localhost:11434)
+├── model_client.py       # Mistral via Ollama
 ├── main.py               # Entry point & pipeline coordinator
 └── AGENT-FUNDAMENTALS.md
 ```
@@ -46,8 +47,7 @@ WEEK_9/
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install autogen-agentchat autogen-ext openai
-ollama serve
-ollama pull phi3
+ollama pull mistral
 python main.py
 ```
 
@@ -55,10 +55,11 @@ python main.py
 
 ## output
 
-![final_results](screenshots/day1/final_result.png)
+![agent_final_output](screenshots/day1/final_agent_output.png)
 
 ## Takeaways
 
 - Agents can collaborate to solve tasks more effectively than a single model call
-- Local LLMs (Ollama) enable fully offline AI systems
+- Memory windows allow agents to retain recent context
+- Role isolation keeps each agent focused and the system modular
 - This architecture extends naturally to memory, RAG, and task planning
