@@ -48,7 +48,7 @@ WEEK_9/
 python3 -m venv .venv && source .venv/bin/activate
 pip install autogen-agentchat autogen-ext openai
 ollama pull mistral
-python main.py
+python main_day1.py
 ```
 
 ---
