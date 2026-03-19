@@ -12,3 +12,6 @@ __init__.py
 .env
 
 execution_trace.json
+
+faiss_metadata.json
+faiss.index
