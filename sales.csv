@@ -1,0 +1,11 @@
+id,product,category,quantity,price,revenue,salary
+1,Laptop,Electronics,5,50000,250000,50000
+2,Phone,Electronics,10,20000,200000,40000
+3,Tablet,Electronics,7,30000,210000,45000
+4,Headphones,Accessories,20,2000,40000,15000
+5,Keyboard,Accessories,15,1500,22500,12000
+6,Mouse,Accessories,25,800,20000,10000
+7,Monitor,Electronics,8,12000,96000,30000
+8,Printer,Electronics,4,15000,60000,25000
+9,Camera,Electronics,3,40000,120000,35000
+10,Speaker,Accessories,12,3000,36000,18000
