@@ -5,7 +5,7 @@ from groq import Groq
 from dotenv import load_dotenv
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY_D3"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY_2"))
 
 # 2 SYSTEM PROMPTS — one for file analysis, and one for task parsing
 ANALYSIS_PROMPT = """You are a File Agent. Your ONLY job is to reason about file contents.
@@ -62,11 +62,9 @@ def parse_task_with_llm(task: str) -> dict:
             max_tokens=200,
         )
         raw = response.choices[0].message.content.strip()
-
         # Clean markdown fences if present
         clean = raw.replace("```json", "").replace("```", "").strip()
         parsed = json.loads(clean)
-
         # Validate required keys
         if "operation" not in parsed:
             raise ValueError("Missing operation key")
@@ -91,7 +89,7 @@ def parse_task_with_llm(task: str) -> dict:
                 "write_path": None,
                 "write_content": None,
             }
-
+        
 # CORE FILE OPERATIONS
 def read_file(filepath: str) -> dict:
     """Read a .txt or .csv file and return its contents."""
@@ -111,7 +109,6 @@ def read_file(filepath: str) -> dict:
                 "row_count": len(rows),
                 "data": rows,
             }
-
     elif ext == ".txt":
         with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
@@ -120,10 +117,8 @@ def read_file(filepath: str) -> dict:
             "filepath": filepath,
             "content": content,
         }
-
     else:
         return {"error": f"Unsupported file type: {ext}. Only .csv and .txt supported."}
-
 
 def write_file(filepath: str, content: str) -> dict:
     """Write content to a .txt or .csv file. Creates file and folders if they don't exist."""
@@ -141,29 +136,23 @@ def write_file(filepath: str, content: str) -> dict:
         "message": f"Successfully written to {filepath}",
     }
 
-
 # LLM FILE ANALYSIS
 def analyze_file_with_llm(file_data: dict) -> dict:
     """Send file data to Groq LLM for intelligent analysis."""
     global conversation_history
-
     user_message = f"Analyze this file data and return structured JSON:\n{json.dumps(file_data, indent=2)}"
     conversation_history.append({"role": "user", "content": user_message})
-
     # Keep memory window
     if len(conversation_history) > MEMORY_WINDOW:
         conversation_history = conversation_history[-MEMORY_WINDOW:]
-
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "system", "content": ANALYSIS_PROMPT}] + conversation_history,
         temperature=0.2,
         max_tokens=1024,
     )
-
     assistant_message = response.choices[0].message.content
     conversation_history.append({"role": "assistant", "content": assistant_message})
-
     # Parse JSON response
     try:
         clean = assistant_message.strip()
@@ -239,10 +228,7 @@ def run(task: str = None, filepath: str = None, write_path: str = None, write_co
     result["error"] = "No task, filepath, or write parameters provided."
     return result
 
-# STANDALONE TEST — Terminal Input
-
 if __name__ == "__main__":
-
     # Create a sample CSV for testing if it doesn't exist
     sample_csv = "sales.csv"
     if not os.path.exists(sample_csv):
@@ -257,7 +243,6 @@ if __name__ == "__main__":
                 ["2024-01-05", "Phone",  "North", 31, 15500],
             ])
         print(f"[FileAgent] Created sample {sample_csv} for testing.\n")
-
     print("=" * 50)
     print("  FILE AGENT — Interactive Terminal")
     print("  Type 'exit' or 'quit' to stop")
@@ -266,14 +251,11 @@ if __name__ == "__main__":
     while True:
         print()
         task = input("Enter your task: ").strip()
-
         if not task:
             continue
-
         if task.lower() in ["exit", "quit"]:
             print("[FileAgent] Goodbye!")
             break
-
         result = run(task=task)
 
         print("\n" + "-" * 50)
@@ -282,18 +264,15 @@ if __name__ == "__main__":
 
         if "error" in result:
             print(f" Error: {result['error']}")
-
         elif result.get("operation") == "write":
             wr = result.get("write_result", {})
             print(f" File written successfully!")
             print(f"   Path         : {wr.get('filepath')}")
             print(f"   Bytes written: {wr.get('bytes_written')}")
             print(f"   Message      : {wr.get('message')}")
-
         elif result.get("operation") == "read":
             analysis = result.get("analysis", {})
-            raw      = result.get("raw_data", {})
-
+            raw = result.get("raw_data", {})
             if "raw_response" in analysis:
                 print(analysis["raw_response"])
             else:
@@ -311,5 +290,4 @@ if __name__ == "__main__":
 
                 elif raw.get("file_type") == "txt":
                     print(f"\n   Content:\n{raw.get('content', '')}")
-
         print("-" * 50)

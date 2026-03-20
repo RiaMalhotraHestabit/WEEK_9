@@ -4,7 +4,7 @@ from groq import Groq
 from dotenv import load_dotenv
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY_D3"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY_2"))
 DB_PATH = "sales.db"
 
 SYSTEM_PROMPT = """You are a DB Agent. Your ONLY job is to translate natural language questions into SQLite SQL queries.

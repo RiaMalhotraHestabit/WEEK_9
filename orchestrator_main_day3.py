@@ -8,7 +8,7 @@ from tools import db_agent
 from dotenv import load_dotenv
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY_D3"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY_2"))
 
 ORCHESTRATOR_PROMPT = """You are an Orchestrator Agent. You receive a user query and create an execution plan as JSON:
 {

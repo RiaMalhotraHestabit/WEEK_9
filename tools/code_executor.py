@@ -7,7 +7,7 @@ from groq import Groq
 from dotenv import load_dotenv
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY_D3"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY_2"))
 
 SYSTEM_PROMPT = """You are a Code Agent. Your ONLY job is to write and execute Python code.
 You receive a task and write Python code to accomplish it.
@@ -50,7 +50,6 @@ Output ONLY executable Python code."""
 
     code = response.choices[0].message.content.strip()
     conversation_history.append({"role": "assistant", "content": code})
-
     # Strip markdown fences if the model adds them anyway
     if code.startswith("```"):
         lines = code.split("\n")
@@ -69,12 +68,7 @@ def execute_code(code: str, raw_data: dict, timeout: int = 15) -> dict:
         tmp_path = f.name
 
     try:
-        result = subprocess.run(
-            [sys.executable, tmp_path],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
+        result = subprocess.run([sys.executable, tmp_path],capture_output=True,text=True,timeout=timeout)
         stdout = result.stdout.strip()
         stderr = result.stderr.strip()
 
@@ -102,11 +96,7 @@ def run(task: str, raw_data: dict) -> dict:
 
     # Build a compact context summary for the prompt
     data_context = json.dumps(raw_data, indent=2)[:1500]  # cap context length
-
-    print(f"[CodeAgent] Generating code via Groq...")
     code = generate_code(task, data_context)
-    print(f"[CodeAgent] Generated code:\n{'-'*40}\n{code}\n{'-'*40}")
-
     print(f"[CodeAgent] Executing code...")
     exec_result = execute_code(code, raw_data)
 
@@ -132,7 +122,6 @@ if __name__ == "__main__":
             {"date": "2024-01-07", "product": "Laptop", "region": "East",  "units_sold": "7",  "revenue": "8400"},
         ],
     }
-
     print("=" * 50)
     print("  CODE AGENT — Interactive Terminal")
     print("  Type 'exit' or 'quit' to stop")
@@ -141,10 +130,8 @@ if __name__ == "__main__":
     while True:
         print()
         task = input("Enter your task: ").strip()
-
         if not task:
             continue
-
         if task.lower() in ["exit", "quit"]:
             print("[CodeAgent] Goodbye!")
             break
@@ -181,13 +168,10 @@ if __name__ == "__main__":
                         print(f"     • {item}")
             else:
                 print(f"     {output}")
-
         elif execution.get("status") == "error":
             print(f" Execution Error:")
             print(f"   {execution.get('stderr', 'Unknown error')}")
-
         elif execution.get("status") == "timeout":
             print(f" Timeout: {execution.get('error')}")
-
         print("-" * 50)
 
