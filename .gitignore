@@ -15,3 +15,5 @@ execution_trace.json
 
 faiss_metadata.json
 faiss.index
+
+*.json
