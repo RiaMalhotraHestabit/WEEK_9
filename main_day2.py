@@ -30,7 +30,7 @@ async def run_pipeline(query):
 
     print("\nUSER:", query)
 
-    # STEP 1 PLANNER
+    #step-1: planning
     plan = await planner.run(task=query)
     plan_text = plan.messages[-1].content
 
@@ -38,7 +38,7 @@ async def run_pipeline(query):
 
     steps = [line for line in plan_text.split("\n") if line.strip()]
 
-    # STEP 2 PARALLEL WORKERS
+    #step-2: parallel workers
     tasks = []
     for i, step in enumerate(steps):
         tasks.append(
@@ -57,13 +57,13 @@ async def run_pipeline(query):
 
     combined = "\n".join(outputs)
 
-    # STEP 3 REFLECTION
+    #step-3: reflection
     reflection = await reflection_agent.run(task=combined)
     reflection_text = reflection.messages[-1].content
 
     print("\nREFLECTION:\n", reflection_text)
 
-    # STEP 4 VALIDATION
+    #step-4: validation
     final = await validator_agent.run(task=reflection_text)
     final_text = final.messages[-1].content
 
