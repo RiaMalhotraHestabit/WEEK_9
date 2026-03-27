@@ -24,5 +24,4 @@ async def main():
     query = "Why is the sky blue?"
     await run_pipeline(query)
 
-
 asyncio.run(main())
