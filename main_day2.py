@@ -5,7 +5,6 @@ from agents.validator import validator_agent
 from autogen_agentchat.agents import AssistantAgent
 from model_client import model_client
 
-
 reflection_agent = AssistantAgent(
     name="reflection_agent",
     model_client=model_client,
@@ -27,12 +26,11 @@ Return only the final refined answer.
 """
 )
 
-
 async def run_pipeline(query):
 
     print("\nUSER:", query)
 
-    # STEP 1 — PLANNER
+    # STEP 1 PLANNER
     plan = await planner.run(task=query)
     plan_text = plan.messages[-1].content
 
@@ -40,7 +38,7 @@ async def run_pipeline(query):
 
     steps = [line for line in plan_text.split("\n") if line.strip()]
 
-    # STEP 2 — PARALLEL WORKERS
+    # STEP 2 PARALLEL WORKERS
     tasks = []
     for i, step in enumerate(steps):
         tasks.append(
@@ -59,24 +57,21 @@ async def run_pipeline(query):
 
     combined = "\n".join(outputs)
 
-    # STEP 3 — REFLECTION
+    # STEP 3 REFLECTION
     reflection = await reflection_agent.run(task=combined)
     reflection_text = reflection.messages[-1].content
 
     print("\nREFLECTION:\n", reflection_text)
 
-    # STEP 4 — VALIDATION
+    # STEP 4 VALIDATION
     final = await validator_agent.run(task=reflection_text)
     final_text = final.messages[-1].content
 
     print("\nFINAL ANSWER:\n", final_text)
 
-
 async def main():
 
     query = input("Enter your query: ")
-
     await run_pipeline(query)
-
 
 asyncio.run(main())
