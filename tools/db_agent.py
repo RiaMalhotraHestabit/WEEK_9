@@ -4,7 +4,7 @@ from groq import Groq
 from dotenv import load_dotenv
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY_2"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY_3"))
 DB_PATH = "sales.db"
 
 SYSTEM_PROMPT = """You are a DB Agent. Your ONLY job is to translate natural language questions into SQLite SQL queries.
@@ -25,7 +25,6 @@ Rules:
 
 MEMORY_WINDOW = 10
 conversation_history = []
-
 
 def setup_database(db_path: str = DB_PATH) -> str:
     #Create and seed the SQLite database if it doesn't exist.
@@ -56,15 +55,11 @@ def setup_database(db_path: str = DB_PATH) -> str:
             ("2024-01-09", "Tablet", "North", 10, 5000),
             ("2024-01-10", "Laptop", "South", 15, 18000),
         ]
-        cur.executemany(
-            "INSERT INTO sales (date, product, region, units_sold, revenue) VALUES (?,?,?,?,?)",
-            sample_rows,
-        )
+        cur.executemany("INSERT INTO sales (date, product, region, units_sold, revenue) VALUES (?,?,?,?,?)", sample_rows)
         conn.commit()
         print(f"[DBAgent] Seeded database with {len(sample_rows)} rows.")
     conn.close()
     return db_path
-
 
 def natural_language_to_sql(question: str) -> str:
     """Use Groq to convert a natural language question to SQL."""
@@ -72,14 +67,12 @@ def natural_language_to_sql(question: str) -> str:
     conversation_history.append({"role": "user", "content": question})
     if len(conversation_history) > MEMORY_WINDOW:
         conversation_history = conversation_history[-MEMORY_WINDOW:]
-
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "system", "content": SYSTEM_PROMPT}] + conversation_history,
         temperature=0.0,
         max_tokens=256,
     )
-
     sql = response.choices[0].message.content.strip()
     conversation_history.append({"role": "assistant", "content": sql})
 
@@ -90,7 +83,6 @@ def natural_language_to_sql(question: str) -> str:
 
     return sql.strip()
 
-
 def execute_query(sql: str, db_path: str = DB_PATH) -> dict:
     """Execute a SQL query and return results as a list of dicts."""
     try:
@@ -98,7 +90,6 @@ def execute_query(sql: str, db_path: str = DB_PATH) -> dict:
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute(sql)
-
         sql_upper = sql.strip().upper()
         if sql_upper.startswith("SELECT"):
             rows = [dict(row) for row in cur.fetchall()]
@@ -119,10 +110,8 @@ def execute_query(sql: str, db_path: str = DB_PATH) -> dict:
                 "message": f"Query executed successfully. Rows affected: {affected}",
                 "rows_affected": affected
             }
-
     except sqlite3.Error as e:
         return {"status": "error", "sql": sql, "error": str(e)}
-
 
 def load_csv_into_db(csv_data: list, db_path: str = DB_PATH):
     """Load CSV rows (list of dicts) into the sales table."""
@@ -132,13 +121,10 @@ def load_csv_into_db(csv_data: list, db_path: str = DB_PATH):
     for row in csv_data:
         cur.execute(
             "INSERT INTO sales (date, product, region, units_sold, revenue) VALUES (?,?,?,?,?)",
-            (row.get("date"), row.get("product"), row.get("region"),
-             int(row.get("units_sold", 0)), float(row.get("revenue", 0))),
-        )
+            (row.get("date"), row.get("product"), row.get("region"),int(row.get("units_sold", 0)), float(row.get("revenue", 0))))
     conn.commit()
     conn.close()
     print(f"[DBAgent] Loaded {len(csv_data)} rows into database.")
-
 
 def run(question: str, db_path: str = DB_PATH) -> dict:
     setup_database(db_path)
@@ -159,43 +145,29 @@ def run(question: str, db_path: str = DB_PATH) -> dict:
         "result": query_result,
     }
 
-
-# STANDALONE TEST ->This is for the Terminal Input
-
 if __name__ == "__main__":
-    setup_database()
-
     print("=" * 50)
     print("  DB AGENT — Interactive Terminal")
     print("  Type 'exit' or 'quit' to stop")
     print("=" * 50)
-
     while True:
         print()
         question = input("Enter your query: ").strip()
-
         if not question:
             continue
-
         if question.lower() in ["exit", "quit"]:
             print("[DBAgent] Goodbye!")
             break
-
         result = run(question)
-
         print("\n" + "-" * 50)
         print("RESULT:")
         print("-" * 50)
-
         query_result = result.get("result", {})
-
         if query_result.get("status") == "error":
             print(f" Error: {query_result.get('error')}")
-
         elif query_result.get("status") == "success":
             print(f" Query executed successfully!")
             print(f"   SQL: {result.get('sql')}")
-
             # SELECT result — show rows
             if "rows" in query_result:
                 rows = query_result.get("rows", [])
@@ -205,9 +177,7 @@ if __name__ == "__main__":
                     for row in rows:
                         row_str = " | ".join(f"{k}: {v}" for k, v in row.items())
                         print(f"     • {row_str}")
-
             # INSERT/UPDATE/DELETE/CREATE result — show message
             else:
                 print(f"   {query_result.get('message')}")
-
         print("-" * 50)

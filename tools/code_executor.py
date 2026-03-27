@@ -7,7 +7,7 @@ from groq import Groq
 from dotenv import load_dotenv
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY_2"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY_3"))
 
 SYSTEM_PROMPT = """You are a Code Agent. Your ONLY job is to write and execute Python code.
 You receive a task and write Python code to accomplish it.
@@ -25,7 +25,6 @@ MEMORY_WINDOW = 10
 conversation_history = []
 
 def generate_code(task: str, data_context: str) -> str:
-    """Ask Groq to write Python code for the task."""
     global conversation_history
 
     user_message = f"""Task: {task}
@@ -58,7 +57,6 @@ Output ONLY executable Python code."""
     return code
 
 def execute_code(code: str, raw_data: dict, timeout: int = 15) -> dict:
-    """Execute the generated Python code in a subprocess with the data injected."""
     data_injection = f'raw_data_json = {json.dumps(json.dumps(raw_data))}\n'
     full_code = data_injection + code
 

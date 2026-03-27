@@ -5,9 +5,10 @@ from groq import Groq
 from dotenv import load_dotenv
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY_2"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY_3"))
 
-# 2 SYSTEM PROMPTS — one for file analysis, and one for task parsing
+# There are 2 different prompts:one for file analysis and one for task parsing.
+
 ANALYSIS_PROMPT = """You are a File Agent. Your ONLY job is to reason about file contents.
 You receive raw file data and return a clean, structured JSON summary.
 You do NOT execute code. You do NOT query databases.
@@ -36,21 +37,13 @@ Rules:
 - For read: extract the EXACT filename the user wants read
 - If no filename is mentioned for read, use "sales.csv" as default
 - If no filename is mentioned for write, use "output.txt" as default
-- If no content is mentioned for write, use empty string"""
+- If no content is mentioned for write, use empty string
+- If the task asks to generate content and save it (e.g. "generate a poem and store in poem.txt"), set operation to "write", write_path to the filename, and write_content to empty string """
 
-# MEMORY
 MEMORY_WINDOW = 10
 conversation_history = []
 
-# TASK PARSER — LLM BASED
 def parse_task_with_llm(task: str) -> dict:
-    """
-    Use LLM to parse the task and extract:
-    - operation (read/write)
-    - filepath (for read)
-    - write_path + write_content (for write)
-    Handles any phrasing naturally.
-    """
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -65,7 +58,6 @@ def parse_task_with_llm(task: str) -> dict:
         # Clean markdown fences if present
         clean = raw.replace("```json", "").replace("```", "").strip()
         parsed = json.loads(clean)
-        # Validate required keys
         if "operation" not in parsed:
             raise ValueError("Missing operation key")
 
@@ -80,7 +72,7 @@ def parse_task_with_llm(task: str) -> dict:
                 "operation": "write",
                 "filepath": None,
                 "write_path": "output.txt",
-                "write_content": task,
+                "write_content":"",
             }
         else:
             return {
@@ -90,9 +82,7 @@ def parse_task_with_llm(task: str) -> dict:
                 "write_content": None,
             }
         
-# CORE FILE OPERATIONS
 def read_file(filepath: str) -> dict:
-    """Read a .txt or .csv file and return its contents."""
     if not os.path.exists(filepath):
         return {"error": f"File not found: {filepath}"}
 
@@ -121,7 +111,6 @@ def read_file(filepath: str) -> dict:
         return {"error": f"Unsupported file type: {ext}. Only .csv and .txt supported."}
 
 def write_file(filepath: str, content: str) -> dict:
-    """Write content to a .txt or .csv file. Creates file and folders if they don't exist."""
     parent = os.path.dirname(filepath)
     if parent:
         os.makedirs(parent, exist_ok=True)
@@ -136,13 +125,13 @@ def write_file(filepath: str, content: str) -> dict:
         "message": f"Successfully written to {filepath}",
     }
 
-# LLM FILE ANALYSIS
+# LLM final analysis of file data.
 def analyze_file_with_llm(file_data: dict) -> dict:
-    """Send file data to Groq LLM for intelligent analysis."""
+    #Send file data to Groq LLM for intelligent analysis.
     global conversation_history
     user_message = f"Analyze this file data and return structured JSON:\n{json.dumps(file_data, indent=2)}"
     conversation_history.append({"role": "user", "content": user_message})
-    # Keep memory window
+
     if len(conversation_history) > MEMORY_WINDOW:
         conversation_history = conversation_history[-MEMORY_WINDOW:]
     response = client.chat.completions.create(
@@ -164,8 +153,6 @@ def analyze_file_with_llm(file_data: dict) -> dict:
     except json.JSONDecodeError:
         return {"raw_response": assistant_message}
 
-
-# MAIN ENTRY POINT
 def run(task: str = None, filepath: str = None, write_path: str = None, write_content: str = None) -> dict:
     """
     Main entry point for the File Agent.
@@ -192,14 +179,25 @@ def run(task: str = None, filepath: str = None, write_path: str = None, write_co
         operation     = parsed.get("operation", "read")
         filepath      = parsed.get("filepath") or filepath
         write_path    = parsed.get("write_path") or write_path
-        write_content = parsed.get("write_content") or write_content
-
+        write_content = write_content or parsed.get("write_content")
         # If write operation, clear filepath so we don't try to read
         if operation == "write":
             filepath = None
 
     # MODE 2: WRITE operation
-    if write_path and write_content is not None:
+    if write_path:
+        if not write_content:
+            print(f"[FileAgent] No content provided, generating from task...")
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant. Generate exactly the content the user wants written to a file. Return ONLY the content itself, no explanations, no preamble."},
+                    {"role": "user", "content": task}
+                ],
+                temperature=0.7,
+                max_tokens=1024,
+            )
+            write_content = response.choices[0].message.content.strip()
         print(f"[FileAgent] Writing to: {write_path}")
         write_result = write_file(write_path, write_content)
         result["operation"] = "write"
@@ -267,9 +265,9 @@ if __name__ == "__main__":
         elif result.get("operation") == "write":
             wr = result.get("write_result", {})
             print(f" File written successfully!")
-            print(f"   Path         : {wr.get('filepath')}")
-            print(f"   Bytes written: {wr.get('bytes_written')}")
-            print(f"   Message      : {wr.get('message')}")
+            print(f"    Path         : {wr.get('filepath')}")
+            print(f"    Bytes written: {wr.get('bytes_written')}")
+            print(f"    Message      : {wr.get('message')}")
         elif result.get("operation") == "read":
             analysis = result.get("analysis", {})
             raw = result.get("raw_data", {})
@@ -277,17 +275,17 @@ if __name__ == "__main__":
                 print(analysis["raw_response"])
             else:
                 print(f" File read successfully!")
-                print(f"   File     : {raw.get('filepath')}")
-                print(f"   Type     : {analysis.get('file_type', raw.get('file_type'))}")
-                print(f"   Summary  : {analysis.get('summary', 'N/A')}")
+                print(f"    File    : {raw.get('filepath')}")
+                print(f"    Type    : {analysis.get('file_type', raw.get('file_type'))}")
+                print(f"    Summary : {analysis.get('summary', 'N/A')}")
 
                 if raw.get("file_type") == "csv":
-                    print(f"   Columns  : {', '.join(analysis.get('columns', []))}")
-                    print(f"   Rows     : {analysis.get('row_count', raw.get('row_count'))}")
-                    print(f"\n   Observations:")
+                    print(f"    Columns  : {', '.join(analysis.get('columns', []))}")
+                    print(f"    Rows     : {analysis.get('row_count', raw.get('row_count'))}")
+                    print(f"\n    Observations:")
                     for obs in analysis.get("observations", []):
                         print(f"     • {obs}")
 
                 elif raw.get("file_type") == "txt":
-                    print(f"\n   Content:\n{raw.get('content', '')}")
+                    print(f"\n    Content:\n{raw.get('content', '')}")
         print("-" * 50)

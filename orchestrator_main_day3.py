@@ -2,13 +2,14 @@ import os
 import json
 import csv
 from groq import Groq
+from torch import Use
 from tools import file_agent
 from tools import code_executor
 from tools import db_agent
 from dotenv import load_dotenv
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY_2"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY_3"))
 
 ORCHESTRATOR_PROMPT = """You are an Orchestrator Agent. You receive a user query and create an execution plan as JSON:
 {
@@ -19,8 +20,7 @@ ORCHESTRATOR_PROMPT = """You are an Orchestrator Agent. You receive a user query
   ],
   "final_goal": "what the final answer should contain"
 }
-Available agents: FileAgent (reads .csv/.txt files), DBAgent (SQLite queries), CodeAgent (Python execution).
-
+Available agents: FileAgent (reads .csv/.txt files and also generates and writes any content like poems/stories/notes to files), DBAgent (SQLite queries), CodeAgent (Python execution, data analysis only).
 CRITICAL RULES for FileAgent tasks:
 - For READ: task must be exactly "read <filename>" e.g. "read sales.csv"
 - For WRITE: ALWAYS preserve the EXACT original content from the user query word for word.
@@ -32,7 +32,7 @@ Respond ONLY with valid JSON."""
 
 
 def create_sample_csv(path: str = "sales.csv"):
-    """Create a sample sales.csv if it doesn't exist."""
+    #Create a sample sales.csv if it doesn't exist.
     if os.path.exists(path):
         return path
     rows = [
@@ -56,7 +56,7 @@ def create_sample_csv(path: str = "sales.csv"):
 
 
 def plan_execution(user_query: str) -> dict:
-    """Use Groq to plan which agents to call."""
+    #Use Groq to plan which agents to call.
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
@@ -86,7 +86,7 @@ def plan_execution(user_query: str) -> dict:
 
 
 def synthesize_final_answer(user_query: str, all_results: list) -> str:
-    """Use Groq to synthesize all agent outputs into a final answer."""
+    #Use Groq to synthesize all agent outputs into a final answer.
     context = json.dumps(all_results, indent=2)[:3000]
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
@@ -100,7 +100,7 @@ def synthesize_final_answer(user_query: str, all_results: list) -> str:
     return response.choices[0].message.content.strip()
 
 def run(user_query: str, csv_path: str = "sales.csv") -> dict:
-    """Main orchestrator pipeline."""
+    #Main orchestrator pipeline.
     print(f"\n{'='*60}")
     print(f"[Orchestrator] Query: {user_query}")
     print(f"{'='*60}")
@@ -108,7 +108,7 @@ def run(user_query: str, csv_path: str = "sales.csv") -> dict:
     # Ensure CSV exists
     create_sample_csv(csv_path)
 
-    # Step 1: Plan
+    #Step-1: Plan
     print("\n[Orchestrator] Planning execution...")
     plan = plan_execution(user_query)
     print(f"[Orchestrator] Plan:\n{json.dumps(plan, indent=2)}")
@@ -116,14 +116,26 @@ def run(user_query: str, csv_path: str = "sales.csv") -> dict:
     all_results = []
     file_raw_data = None
 
-    # Step 2: Execute each agent in the plan
+    #Step-2: Execute each agent in the plan
     for step in plan.get("plan", []):
         agent_name = step["agent"]
         task = step["task"]
         print(f"\n[Orchestrator] → Step {step['step']}: {agent_name} — {task}")
 
         if agent_name == "FileAgent":
-            result = file_agent.run(task=user_query)
+            prior_output = None
+            for prev in all_results:
+                if prev["agent"] == "CodeAgent":
+                    exec_result = prev["result"]
+                    if isinstance(exec_result.get("result"), dict):
+                        prior_output = exec_result["result"].get("output") or exec_result["result"].get("result")
+                    elif isinstance(exec_result.get("result"), str):
+                        prior_output = exec_result["result"]
+                    else:
+                        prior_output = exec_result.get("output")
+                    break
+
+            result = file_agent.run(task=task, write_content=prior_output)
             file_raw_data = result.get("raw_data", {})
 
             if "error" in result:
@@ -161,7 +173,7 @@ def run(user_query: str, csv_path: str = "sales.csv") -> dict:
             result = code_executor.run(task=task, raw_data=data_to_analyze)
             all_results.append({"step": step["step"], "agent": agent_name, "result": result.get("execution", {})})
 
-    # Step 3: Synthesize
+    #Step-3: Synthesize
     print(f"\n[Orchestrator] Synthesizing final answer...")
     final_answer = synthesize_final_answer(user_query, all_results)
 
