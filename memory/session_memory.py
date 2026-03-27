@@ -1,8 +1,4 @@
 class SessionMemory:
-    """
-    Short-term rolling window memory.
-    Stores last N messages for context injection.
-    """
 
     def __init__(self, window_size: int = 10):
         self.window_size = window_size

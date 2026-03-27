@@ -4,13 +4,7 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-
 class VectorStore:
-    """
-    FAISS-based semantic memory.
-    Stores embeddings and retrieves similar context.
-    """
-
     def __init__(self,
                  model_name="all-MiniLM-L6-v2",
                  index_path="memory/faiss.index",
@@ -63,5 +57,4 @@ class VectorStore:
                     "text": self.metadata[idx]["text"],
                     "score": float(1 / (1 + dist))
                 })
-
         return results
