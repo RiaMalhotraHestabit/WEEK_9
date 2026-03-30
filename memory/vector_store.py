@@ -5,10 +5,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 class VectorStore:
-    def __init__(self,
-                 model_name="all-MiniLM-L6-v2",
-                 index_path="memory/faiss.index",
-                 metadata_path="memory/faiss_metadata.json"):
+    def __init__(self,model_name="all-MiniLM-L6-v2",index_path="memory/faiss.index",metadata_path="memory/faiss_metadata.json"):
 
         self.model = SentenceTransformer(model_name)
         self.dimension = self.model.get_sentence_embedding_dimension()

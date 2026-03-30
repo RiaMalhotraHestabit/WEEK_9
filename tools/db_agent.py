@@ -62,7 +62,7 @@ def setup_database(db_path: str = DB_PATH) -> str:
     return db_path
 
 def natural_language_to_sql(question: str) -> str:
-    """Use Groq to convert a natural language question to SQL."""
+    #Use Groq to convert a natural language question to SQL.
     global conversation_history
     conversation_history.append({"role": "user", "content": question})
     if len(conversation_history) > MEMORY_WINDOW:
@@ -84,7 +84,7 @@ def natural_language_to_sql(question: str) -> str:
     return sql.strip()
 
 def execute_query(sql: str, db_path: str = DB_PATH) -> dict:
-    """Execute a SQL query and return results as a list of dicts."""
+    #Execute a SQL query and return results as a list of dicts.
     try:
         conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
@@ -114,7 +114,7 @@ def execute_query(sql: str, db_path: str = DB_PATH) -> dict:
         return {"status": "error", "sql": sql, "error": str(e)}
 
 def load_csv_into_db(csv_data: list, db_path: str = DB_PATH):
-    """Load CSV rows (list of dicts) into the sales table."""
+    #Load CSV rows (list of dicts) into the sales table.
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("DELETE FROM sales")  # replace existing data

@@ -176,9 +176,9 @@ def run(task: str = None, filepath: str = None, write_path: str = None, write_co
               f"filepath: {parsed.get('filepath')} | "
               f"write_path: {parsed.get('write_path')}")
 
-        operation     = parsed.get("operation", "read")
-        filepath      = parsed.get("filepath") or filepath
-        write_path    = parsed.get("write_path") or write_path
+        operation = parsed.get("operation", "read")
+        filepath = parsed.get("filepath") or filepath
+        write_path = parsed.get("write_path") or write_path
         write_content = write_content or parsed.get("write_content")
         # If write operation, clear filepath so we don't try to read
         if operation == "write":

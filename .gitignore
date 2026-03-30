@@ -17,3 +17,5 @@ faiss_metadata.json
 faiss.index
 
 *.json
+
+nexus_ai/app.py

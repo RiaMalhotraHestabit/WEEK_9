@@ -21,7 +21,7 @@ async def run_pipeline(query):
 
 async def main():
 
-    query = "Why is the sky blue?"
+    query = input("Enter your question: ")
     await run_pipeline(query)
 
 asyncio.run(main())

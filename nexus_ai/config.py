@@ -1,9 +1,8 @@
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY_2")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY_3")
 MODEL        = "llama-3.3-70b-versatile"
 
 # AutoGen 0.4.x expects an OpenAI-compatible client config
@@ -14,9 +13,7 @@ AUTOGEN_MODEL_CLIENT_CONFIG = {
     "base_url": "https://api.groq.com/openai/v1",
 }
 
-# ─────────────────────────────────────────────
 #  PATHS
-# ─────────────────────────────────────────────
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
 LOGS_DIR    = os.path.join(BASE_DIR, "logs")
 MEMORY_DIR  = os.path.join(BASE_DIR, "..", "memory")
@@ -26,20 +23,15 @@ FAISS_INDEX = os.path.join(MEMORY_DIR, "faiss.index")
 FAISS_META  = os.path.join(MEMORY_DIR, "faiss_metadata.json")
 TRACE_FILE  = os.path.join(LOGS_DIR, "trace.json")
 
-# ─────────────────────────────────────────────
 #  GENERATION SETTINGS
-# ─────────────────────────────────────────────
 MEMORY_WINDOW = 10
 MAX_TOKENS    = 1024       # bumped up for richer agent responses
 TEMPERATURE   = 0.3
 
-# ─────────────────────────────────────────────
 #  AGENT REGISTRY
 #  Each agent has:
-#    role        → system-prompt identity injected into AssistantAgent
-#    temperature → creativity level
-#    keywords    → used by Orchestrator to decide if this agent is needed
-# ─────────────────────────────────────────────
+#  role: system-prompt identity injected into AssistantAgent
+#  keywords: used by Orchestrator to decide if this agent is needed
 AGENTS = {
     "Orchestrator": {
         "role"       : (
@@ -127,10 +119,7 @@ AGENTS = {
     },
 }
 
-# ─────────────────────────────────────────────
 #  PIPELINE RULES (used by smart selector)
-# ─────────────────────────────────────────────
-
 # Critic + Optimizer always travel together
 CRITIC_THRESHOLD = 3        # add Critic+Optimizer when pipeline has >= this many agents
 
