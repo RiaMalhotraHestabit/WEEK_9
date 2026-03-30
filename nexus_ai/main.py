@@ -9,14 +9,13 @@ import agents as ag
 
 #these are 2 functions for logging.
 def save_trace(trace: dict):
-    """Persist full execution trace to logs/trace.json."""
     os.makedirs(LOGS_DIR, exist_ok=True)
     with open(TRACE_FILE, "w") as f:
         json.dump(trace, f, indent=2)
     print(f"\n[NEXUS] Trace saved → {TRACE_FILE}")
 
 def print_step(step: int, agent: str, output: str):
-    """Pretty-print a single agent's output."""
+#Pretty-print a single agent's output.
     print(f"\n{'─'*60}")
     print(f"  Step {step} | {agent}")
     print(f"{'─'*60}")
@@ -28,18 +27,16 @@ def select_agents(orchestrator_output: str) -> list[str]:
     validated list of agent names to run.
 
     Rules enforced:
-    • Orchestrator itself is never in the run-list (already ran)
-    • Reporter always appears last
-    • Critic + Optimizer always travel together
-    • Agent order follows AGENT_ORDER from config
-    • If parse fails → fallback to full pipeline
+    1.Orchestrator itself is never in the run-list (already ran)
+    2.Reporter always appears last
+    3.Critic + Optimizer always travel together
+    4.Agent order follows AGENT_ORDER from config
+    5.If parse fails → fallback to full pipeline
     """
     # try to extract JSON array from Orchestrator output 
     selected: list[str] = []
     try:
-        # Strip markdown fences if present
         clean = re.sub(r"```[a-z]*", "", orchestrator_output).strip("` \n")
-        # Find first [...] block
         match = re.search(r'\[.*?\]', clean, re.DOTALL)
         if match:
             selected = json.loads(match.group(0))
@@ -49,7 +46,7 @@ def select_agents(orchestrator_output: str) -> list[str]:
     #fallback: full pipeline
     if not selected:
         print("[NEXUS] Orchestrator did not return valid JSON — running full pipeline.")
-        selected = [a for a in AGENT_ORDER]  # already excludes Orchestrator
+        selected = [a for a in AGENT_ORDER]  
 
     # normalise names (title-case)
     valid_names = set(AGENT_ORDER)
@@ -100,10 +97,8 @@ AGENT_FN_MAP = {
 
 
 def _dispatch(name: str, query: str, context: str, filepath: str = None) -> str:
-    """
-    Call the right agent function.
-    Researcher gets the optional filepath kwarg.
-    """
+    #Call the right agent function.Researcher gets the optional filepath kwarg.
+    
     fn = AGENT_FN_MAP.get(name)
     if fn is None:
         return f"[{name}] — no handler registered."
@@ -241,7 +236,6 @@ def run(query: str, verbose: bool = False) -> dict:
 if __name__ == "__main__":
     print("=" * 60)
     print("  NEXUS AI — Autonomous Multi-Agent System")
-    print("  Powered by AutoGen 0.4.x + Groq LLaMA 3.3")
     print("=" * 60)
     print("""
 What can NEXUS AI do?
